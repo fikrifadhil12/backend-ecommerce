@@ -6,10 +6,14 @@ console.log("SECRET_KEY:", process.env.SECRET_KEY ? "***hidden***" : "EMPTY");
 const express = require("express");
 const { Pool } = require("pg");
 const cors = require("cors");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+const SECRET_KEY = process.env.SECRET_KEY;
 
 const pool = new Pool({
   user: process.env.PGUSER,
@@ -108,7 +112,9 @@ app.post("/login", async (req, res) => {
 
 // ✅ VERIFY TOKEN
 app.get("/verify-token", (req, res) => {
-  const token = req.headers.authorization?.split(" ")[1];
+  // Ganti optional chaining jadi if statement biasa:
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
   if (!token) return res.status(401).json({ message: "No token provided" });
 
   jwt.verify(token, SECRET_KEY, (err, decoded) => {
