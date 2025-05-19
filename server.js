@@ -233,3 +233,14 @@ app.post("/checkout", authenticateToken, async (req, res) => {
 app.listen(5000, () => {
   console.log("🚀 Server running on port 5000");
 });
+
+
+
+app.get("/test-db", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT NOW()");
+    res.json({ status: "success", time: result.rows[0].now });
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error.message });
+  }
+});
