@@ -15,7 +15,7 @@
     "jsonwebtoken": "^9.0.2"
   },
   "engines": {
-    "node": "18.x"
+    "node": "14.x"
   },
   "license": "MIT",
   "keywords": [
