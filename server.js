@@ -3,17 +3,18 @@ console.log("PGUSER:", process.env.PGUSER);
 console.log("PGPASSWORD:", process.env.PGPASSWORD ? "***hidden***" : "EMPTY");
 console.log("SECRET_KEY:", process.env.SECRET_KEY ? "***hidden***" : "EMPTY");
 
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+
 const express = require("express");
 const { Pool } = require("pg");
 const cors = require("cors");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
 
 const app = express();
-app.use(cors());
-app.use(express.json());
 
 const SECRET_KEY = process.env.SECRET_KEY;
+app.use(cors());
+app.use(express.json());
 
 const pool = new Pool({
   user: process.env.PGUSER,
@@ -32,14 +33,6 @@ pool.connect((err) => {
   } else {
     console.log("✅ Connected to PostgreSQL database.");
   }
-});
-
-app.get("/", (req, res) => {
-  res.send("API is running!");
-});
-
-app.listen(process.env.PORT || 3000, () => {
-  console.log("Server is running...");
 });
 
 // Middleware: Auth Token
@@ -112,9 +105,7 @@ app.post("/login", async (req, res) => {
 
 // ✅ VERIFY TOKEN
 app.get("/verify-token", (req, res) => {
-  // Ganti optional chaining jadi if statement biasa:
-  const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1];
+  const token = req.headers.authorization?.split(" ")[1];
   if (!token) return res.status(401).json({ message: "No token provided" });
 
   jwt.verify(token, SECRET_KEY, (err, decoded) => {
