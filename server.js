@@ -16,18 +16,7 @@ const SECRET_KEY = process.env.SECRET_KEY;
 app.use(cors());
 app.use(express.json());
 
-const pool = new Pool({
-  user: process.env.PGUSER,
-  host: process.env.PGHOST,
-  database: process.env.PGDATABASE,
-  password: process.env.PGPASSWORD,
-  port: process.env.PGPORT,
-  ssl: {
-    rejectUnauthorized: false,
-  },
-});
-
-const { Pool } = require('pg');
+// PERBAIKAN KONEKSI DATABASE (hanya mengubah bagian ini)
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || `postgres://${process.env.PGUSER}:${process.env.PGPASSWORD}@${process.env.PGHOST}:${process.env.PGPORT}/${process.env.PGDATABASE}`,
   ssl: {
@@ -233,8 +222,6 @@ app.post("/checkout", authenticateToken, async (req, res) => {
 app.listen(5000, () => {
   console.log("🚀 Server running on port 5000");
 });
-
-
 
 app.get("/test-db", async (req, res) => {
   try {
