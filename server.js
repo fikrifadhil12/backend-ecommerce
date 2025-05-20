@@ -27,11 +27,11 @@ const pool = new Pool({
   },
 });
 
-pool.connect((err) => {
-  if (err) {
-    console.error("❌ Database connection failed:", err.stack);
-  } else {
-    console.log("✅ Connected to PostgreSQL database.");
+const { Pool } = require('pg');
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL || `postgres://${process.env.PGUSER}:${process.env.PGPASSWORD}@${process.env.PGHOST}:${process.env.PGPORT}/${process.env.PGDATABASE}`,
+  ssl: {
+    rejectUnauthorized: false
   }
 });
 
