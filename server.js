@@ -126,14 +126,17 @@ app.post("/login", async (req, res) => {
         id: user.id, 
         name: user.name, 
         email: user.email,
-        phone: user.phone
+        phone: user.phone,
+        role: user.role // ⬅️ peran user (admin, buyer, seller, dst.)
       },
     });
+
   } catch (err) {
     console.error("Login error:", err.message);
     res.status(500).json({ message: "Server error" });
   }
 });
+
 
 // ✅ VERIFY TOKEN endpoint
 app.get("/verify-token", (req, res) => {
