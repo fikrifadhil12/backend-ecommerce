@@ -8,14 +8,30 @@ const cors = require("cors");
 const app = express();
 const SECRET_KEY = process.env.SECRET_KEY || "supersecretkey123";
 
+// Konfigurasi CORS
 app.use(cors({
-  origin: process.env.FRONTEND_URL || "https://reactjs-ecommerce1.vercel.app",
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "Authorization"]
+  origin: "https://reactjs-ecommerce1.vercel.app",
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
 }));
+
+// Tambahan manual header CORS untuk preflight (OPTIONS)
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "https://reactjs-ecommerce1.vercel.app");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  next();
+});
+
+// Tangani preflight request
+app.options("*", (req, res) => {
+  res.sendStatus(200);
+});
 
 app.use(express.json());
 
+// Konfigurasi koneksi PostgreSQL
 const poolConfig = {
   connectionString: process.env.DATABASE_URL || `postgres://${process.env.PGUSER}:${process.env.PGPASSWORD}@${process.env.PGHOST}:${process.env.PGPORT}/${process.env.PGDATABASE}`,
   ssl: {
@@ -25,27 +41,25 @@ const poolConfig = {
 
 const pool = new Pool(poolConfig);
 
+// Cek koneksi database
 pool.query("SELECT NOW()")
   .then(() => console.log("✅ Connected to PostgreSQL database"))
   .catch(err => console.error("❌ Database connection error:", err));
 
+// Middleware verifikasi token
 function authenticateToken(req, res, next) {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
-
-  if (!token) {
-    return res.status(401).json({ message: "No token provided" });
-  }
+  if (!token) return res.status(401).json({ message: "No token provided" });
 
   jwt.verify(token, SECRET_KEY, (err, user) => {
-    if (err) {
-      return res.status(403).json({ message: "Invalid token" });
-    }
+    if (err) return res.status(403).json({ message: "Invalid token" });
     req.user = user;
     next();
   });
 }
 
+// Endpoint untuk menambahkan akun default (jika belum ada)
 async function insertDefaultUsers() {
   try {
     const adminCheck = await pool.query("SELECT * FROM users WHERE email = $1", ["admin@gmail.com"]);
@@ -77,6 +91,7 @@ app.get("/seed-users", async (req, res) => {
   }
 });
 
+// Register user baru
 app.post("/register", async (req, res) => {
   try {
     const { name, email, phone, password } = req.body;
@@ -101,6 +116,7 @@ app.post("/register", async (req, res) => {
   }
 });
 
+// Login user
 app.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -127,6 +143,7 @@ app.post("/login", async (req, res) => {
   }
 });
 
+// Verifikasi token dari frontend
 app.get("/verify-token", (req, res) => {
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) return res.status(401).json({ valid: false, message: "No token provided" });
@@ -137,6 +154,7 @@ app.get("/verify-token", (req, res) => {
   });
 });
 
+// Produk
 app.get("/products", async (req, res) => {
   try {
     const result = await pool.query("SELECT * FROM products");
@@ -156,6 +174,7 @@ app.get("/products/:id", async (req, res) => {
   }
 });
 
+// Checkout
 app.post("/checkout", authenticateToken, async (req, res) => {
   try {
     const {
@@ -201,6 +220,7 @@ app.post("/checkout", authenticateToken, async (req, res) => {
   }
 });
 
+// Tes koneksi dan status server
 app.get("/health", (req, res) => {
   res.status(200).json({ status: "healthy", time: new Date().toISOString() });
 });
@@ -214,6 +234,7 @@ app.get("/test-db", async (req, res) => {
   }
 });
 
+// Jalankan server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
